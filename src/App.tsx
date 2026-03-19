@@ -12,7 +12,9 @@ function App() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>INVENTIA Dashboard 🚀</h1>
+      <h1 className="text-3xl font-bold text-blue-500">
+        Tailwind funcionando 🚀
+      </h1>
 
       {data ? (
         <div>
