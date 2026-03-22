@@ -15,18 +15,20 @@ function Products() {
     });
     const handleSubmit = async () => {
         try {
-            // VALIDACIÓN SIMPLE
             if (!form.name || form.price <= 0) {
                 alert("Nombre y precio son obligatorios");
                 return;
             }
 
-            await api.post("/products", form);
+            if (editingId) {
+                await api.put(`/products/${editingId}`, form);
+            } else {
+                await api.post("/products", form);
+            }
 
             const res = await api.get("/products");
             setProducts(res.data);
 
-            //LIMPIAR FORMULARIO
             setForm({
                 name: "",
                 description: "",
@@ -36,11 +38,15 @@ function Products() {
                 category: ""
             });
 
+            setEditingId(null);
             setShowForm(false);
+
         } catch (error) {
             console.error(error);
         }
     };
+
+
 
     const lowStockCount = products.filter(
         (p) => p.stock <= p.stockMinimum
@@ -51,6 +57,26 @@ function Products() {
             .then(res => setProducts(res.data))
             .catch(err => console.error(err));
     }, []);
+
+    const handleDelete = async (id: number) => {
+        if (!confirm("¿Eliminar producto?")) return;
+
+        try {
+            await api.delete(`/products/${id}`);
+
+            const res = await api.get("/products");
+            setProducts(res.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const [editingId, setEditingId] = useState<number | null>(null);
+
+    const handleEdit = (product: any) => {
+        setForm(product);
+        setEditingId(product.id);
+        setShowForm(true);
+    };
 
     return (
         <div className="p-6">
@@ -116,7 +142,11 @@ function Products() {
                         onClick={handleSubmit}
                         className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded shadow"
                     >
-                        {loading ? "Guardando..." : "Guardar"}
+                        {loading
+                            ? "Guardando..."
+                            : editingId
+                                ? "Actualizar"
+                                : "Guardar"}
                     </button>
                 </div>
             )}
@@ -136,6 +166,7 @@ function Products() {
                         <th className="p-3">Stock</th>
                         <th className="p-3">Stock Mínimo</th>
                         <th className="p-3">Categoría</th>
+                        <th className="p-3">Acciones</th>
                     </tr>
                 </thead>
 
@@ -160,6 +191,24 @@ function Products() {
                                 <td className="p-3">{p.stockMinimum}</td>
 
                                 <td className="p-3">{p.category}</td>
+
+                                <td className="p-3 space-x-2">
+
+                                    <button
+                                        onClick={() => handleEdit(p)}
+                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded"
+                                    >
+                                        Editar
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleDelete(p.id)}
+                                        className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </td>
+
                             </tr>
                         );
                     })}
