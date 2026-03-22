@@ -1,24 +1,55 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
 
+type Product = {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    stock: number;
+    stockMinimum: number;
+    category: string;
+};
+
+type ProductForm = {
+    name: string;
+    description: string;
+    price: number;
+    stock: number;
+    stockMinimum: number;
+    category: string;
+};
+
 function Products() {
-    const [products, setProducts] = useState<any[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [form, setForm] = useState({
+    const [editingId, setEditingId] = useState<number | null>(null);
+
+    const [form, setForm] = useState<ProductForm>({
         name: "",
         description: "",
         price: 0,
         stock: 0,
         stockMinimum: 0,
-        category: ""
+        category: "",
     });
+
+    useEffect(() => {
+        api
+            .get("/products")
+            .then((res) => setProducts(res.data))
+            .catch((err) => console.error(err));
+    }, []);
+
     const handleSubmit = async () => {
         try {
             if (!form.name || form.price <= 0) {
                 alert("Nombre y precio son obligatorios");
                 return;
             }
+
+            setLoading(true);
 
             if (editingId) {
                 await api.put(`/products/${editingId}`, form);
@@ -35,28 +66,17 @@ function Products() {
                 price: 0,
                 stock: 0,
                 stockMinimum: 0,
-                category: ""
+                category: "",
             });
 
             setEditingId(null);
             setShowForm(false);
-
         } catch (error) {
             console.error(error);
+        } finally {
+            setLoading(false);
         }
     };
-
-
-
-    const lowStockCount = products.filter(
-        (p) => p.stock <= p.stockMinimum
-    ).length;
-
-    useEffect(() => {
-        api.get("/products")
-            .then(res => setProducts(res.data))
-            .catch(err => console.error(err));
-    }, []);
 
     const handleDelete = async (id: number) => {
         if (!confirm("¿Eliminar producto?")) return;
@@ -67,87 +87,124 @@ function Products() {
             setProducts(res.data);
         } catch (error) {
             console.error(error);
+            alert("No se pudo eliminar el producto");
         }
     };
-    const [editingId, setEditingId] = useState<number | null>(null);
 
-    const handleEdit = (product: any) => {
-        setForm(product);
+    const handleEdit = (product: Product) => {
+        setForm({
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            stock: product.stock,
+            stockMinimum: product.stockMinimum,
+            category: product.category,
+        });
+
         setEditingId(product.id);
         setShowForm(true);
     };
 
+    const lowStockCount = products.filter(
+        (p) => p.stock <= p.stockMinimum
+    ).length;
 
     return (
         <div className="p-6">
-
             <h1 className="text-2xl font-bold mb-4">Productos</h1>
 
             <button
-                onClick={() => setShowForm(true)}
+                onClick={() => {
+                    setShowForm(true);
+                    setEditingId(null);
+                    setForm({
+                        name: "",
+                        description: "",
+                        price: 0,
+                        stock: 0,
+                        stockMinimum: 0,
+                        category: "",
+                    });
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mb-4 shadow"
             >
                 Agregar Producto
-
             </button>
 
             {showForm && (
                 <div className="mb-4 p-4 border rounded">
-                    <h2 className="font-bold mb-2">Nuevo Producto</h2>
+                    <h2 className="font-bold mb-2">
+                        {editingId ? "Editar Producto" : "Nuevo Producto"}
+                    </h2>
 
-                    <input
-                        placeholder="Nombre"
-                        className="border p-2 mr-2"
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    />
+                    <div className="flex flex-wrap gap-2">
+                        <input
+                            placeholder="Nombre"
+                            className="border p-2"
+                            value={form.name}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        />
 
-                    <input
-                        placeholder="Descripción"
-                        className="border p-2 mr-2"
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    />
+                        <input
+                            placeholder="Descripción"
+                            className="border p-2"
+                            value={form.description}
+                            onChange={(e) =>
+                                setForm({ ...form, description: e.target.value })
+                            }
+                        />
 
-                    <input
-                        placeholder="Precio"
-                        type="number"
-                        className="border p-2 mr-2"
-                        onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-                    />
+                        <input
+                            placeholder="Precio"
+                            type="number"
+                            className="border p-2"
+                            value={form.price}
+                            onChange={(e) =>
+                                setForm({ ...form, price: Number(e.target.value) })
+                            }
+                        />
 
-                    <input
-                        placeholder="Stock"
-                        type="number"
-                        className="border p-2 mr-2"
-                        onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
-                    />
+                        <input
+                            placeholder="Stock"
+                            type="number"
+                            className="border p-2"
+                            value={form.stock}
+                            onChange={(e) =>
+                                setForm({ ...form, stock: Number(e.target.value) })
+                            }
+                        />
 
-                    <input
-                        placeholder="Stock mínimo"
-                        type="number"
-                        className="border p-2 mr-2"
-                        onChange={(e) => setForm({ ...form, stockMinimum: Number(e.target.value) })}
-                    />
+                        <input
+                            placeholder="Stock mínimo"
+                            type="number"
+                            className="border p-2"
+                            value={form.stockMinimum}
+                            onChange={(e) =>
+                                setForm({ ...form, stockMinimum: Number(e.target.value) })
+                            }
+                        />
 
-                    <input
-                        placeholder="Categoría"
-                        className="border p-2 mr-2"
-                        value={form.category}
-                        onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    />
+                        <input
+                            placeholder="Categoría"
+                            className="border p-2"
+                            value={form.category}
+                            onChange={(e) =>
+                                setForm({ ...form, category: e.target.value })
+                            }
+                        />
 
-                    <button
-                        disabled={loading}
-                        onClick={handleSubmit}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded shadow"
-                    >
-                        {loading
-                            ? "Guardando..."
-                            : editingId
-                                ? "Actualizar"
-                                : "Guardar"}
-                    </button>
+                        <button
+                            disabled={loading}
+                            onClick={handleSubmit}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded shadow"
+                        >
+                            {loading
+                                ? "Guardando..."
+                                : editingId
+                                    ? "Actualizar"
+                                    : "Guardar"}
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -183,17 +240,12 @@ function Products() {
                                 <td className="p-3 font-semibold">{p.name}</td>
                                 <td className="p-3">{p.description}</td>
                                 <td className="p-3">S/ {p.price}</td>
-
                                 <td className={`p-3 font-bold ${lowStock ? "text-red-600" : ""}`}>
                                     {p.stock}
                                 </td>
-
                                 <td className="p-3">{p.stockMinimum}</td>
-
                                 <td className="p-3">{p.category}</td>
-
                                 <td className="p-3 space-x-2">
-
                                     <button
                                         onClick={() => handleEdit(p)}
                                         className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded"
@@ -208,7 +260,6 @@ function Products() {
                                         Eliminar
                                     </button>
                                 </td>
-
                             </tr>
                         );
                     })}
