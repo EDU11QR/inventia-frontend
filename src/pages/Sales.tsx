@@ -28,7 +28,17 @@ function Sales() {
     const addToCart = (product: Product) => {
         const existing = cart.find((p) => p.id === product.id);
 
+        if (product.stock === 0) {
+            alert("Este producto no tiene stock disponible");
+            return;
+        }
+
         if (existing) {
+            if (existing.quantity >= product.stock) {
+                alert("No puedes agregar más unidades que el stock disponible");
+                return;
+            }
+
             setCart(
                 cart.map((p) =>
                     p.id === product.id
@@ -43,11 +53,25 @@ function Sales() {
 
     const updateQuantity = (id: number, amount: number) => {
         setCart(
-            cart.map((p) =>
-                p.id === id
-                    ? { ...p, quantity: Math.max(1, p.quantity + amount) }
-                    : p
-            )
+            cart.map((p) => {
+                if (p.id !== id) return p;
+
+                const product = products.find((prod) => prod.id === id);
+                if (!product) return p;
+
+                const newQuantity = p.quantity + amount;
+
+                if (newQuantity < 1) {
+                    return p;
+                }
+
+                if (newQuantity > product.stock) {
+                    alert("No puedes superar el stock disponible");
+                    return p;
+                }
+
+                return { ...p, quantity: newQuantity };
+            })
         );
     };
 
@@ -76,14 +100,14 @@ function Sales() {
 
             await api.post("/sales", payload);
 
-            alert("Venta realizada ✅");
+            alert("Venta realizada correctamente ✅");
             setCart([]);
 
             const res = await api.get("/products");
             setProducts(res.data);
         } catch (error) {
             console.error(error);
-            alert("Error en la venta ❌");
+            alert("No se pudo completar la venta ❌");
         }
     };
 
@@ -98,17 +122,26 @@ function Sales() {
                         className="border p-3 mb-2 rounded flex justify-between items-center"
                     >
                         <div>
-                            <p className="font-semibold">{p.name}</p>
-                            <p className="text-sm text-gray-500">{p.category}</p>
-                            <p>S/ {p.price}</p>
-                            <p>Stock: {p.stock}</p>
+                            <p className="font-semibold text-lg">{p.name}</p>
+                            <p className="text-sm text-gray-600">{p.description || "Sin descripción"}</p>
+                            <p className="text-sm text-gray-500">Categoría: {p.category || "General"}</p>
+
+                            <p className={`text-sm font-medium ${p.stock === 0 ? "text-red-600" : "text-gray-700"}`}>
+                                Stock disponible: {p.stock}
+                            </p>
+
+                            <p className="font-bold text-green-700">S/ {p.price}</p>
                         </div>
 
                         <button
                             onClick={() => addToCart(p)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded"
+                            disabled={p.stock === 0} // desactiva el boton si el stock es 0
+                            className={`px-3 py-2 rounded text-white ${p.stock === 0
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-blue-500 hover:bg-blue-600"
+                                }`} // cambia el color del boton si el stock es 0
                         >
-                            Agregar
+                            {p.stock === 0 ? "Sin stock" : "Agregar"}
                         </button>
                     </div>
                 ))}
@@ -123,48 +156,61 @@ function Sales() {
                     cart.map((p) => (
                         <div
                             key={p.id}
-                            className="border p-3 mb-2 rounded"
+                            className="border p-4 mb-3 rounded-lg shadow-sm bg-white"
                         >
-                            <p className="font-semibold">{p.name}</p>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-semibold text-lg">{p.name}</p>
+                                    <p className="text-sm text-gray-500">Precio unitario: S/ {p.price}</p>
+                                </div>
 
-                            <div className="flex items-center gap-2 my-2">
+                                <button
+                                    onClick={() => removeFromCart(p.id)}
+                                    className="text-red-500 hover:text-red-700 text-sm"
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-3 my-3">
                                 <button
                                     onClick={() => updateQuantity(p.id, -1)}
-                                    className="bg-gray-200 px-2 py-1 rounded"
+                                    className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
                                 >
                                     -
                                 </button>
 
-                                <span>{p.quantity}</span>
+                                <span className="font-semibold">{p.quantity}</span>
 
                                 <button
                                     onClick={() => updateQuantity(p.id, 1)}
-                                    className="bg-gray-200 px-2 py-1 rounded"
+                                    className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded"
                                 >
                                     +
                                 </button>
                             </div>
 
-                            <p>Subtotal: S/ {p.price * p.quantity}</p>
-
-                            <button
-                                onClick={() => removeFromCart(p.id)}
-                                className="text-red-500 mt-2"
-                            >
-                                Eliminar
-                            </button>
+                            <p className="font-bold text-green-700">
+                                Subtotal: S/ {p.price * p.quantity}
+                            </p>
                         </div>
                     ))
                 )}
 
-                <h3 className="mt-4 font-bold text-lg">Total: S/ {total}</h3>
+                <div className="mt-6 border-t pt-4">
+                    <h3 className="font-bold text-xl mb-3">Total: S/ {total}</h3>
 
-                <button
-                    onClick={handleCheckout}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 mt-2 rounded"
-                >
-                    Confirmar Venta
-                </button>
+                    <button
+                        onClick={handleCheckout}
+                        disabled={cart.length === 0}
+                        className={`px-4 py-2 rounded text-white ${cart.length === 0
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-green-600 hover:bg-green-700"
+                            }`}
+                    >
+                        Confirmar Venta
+                    </button>
+                </div>
             </div>
         </div>
     );
