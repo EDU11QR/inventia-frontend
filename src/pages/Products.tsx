@@ -63,7 +63,6 @@ function Products() {
 
         try {
             await api.delete(`/products/${id}`);
-
             const res = await api.get("/products");
             setProducts(res.data);
         } catch (error) {
@@ -77,6 +76,7 @@ function Products() {
         setEditingId(product.id);
         setShowForm(true);
     };
+
 
     return (
         <div className="p-6">
