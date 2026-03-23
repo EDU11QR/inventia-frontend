@@ -156,8 +156,6 @@ function Products() {
             />
 
             <div className="p-6">
-                <h1 className="text-2xl font-bold mb-4">Productos</h1>
-
                 <input
                     type="text"
                     placeholder="Buscar producto..."

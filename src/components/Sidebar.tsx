@@ -9,7 +9,7 @@ function Sidebar({ page, setPage }: SidebarProps) {
     return (
         <aside className="w-64 bg-white shadow-md min-h-screen p-4">
             <h1 className="text-2xl font-bold text-indigo-600 mb-8">
-                LIBRERIA HUBER
+                INVENTIA
             </h1>
 
             <nav className="flex flex-col gap-3">

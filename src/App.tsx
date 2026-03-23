@@ -4,6 +4,7 @@ import Products from "./pages/Products";
 import Sales from "./pages/Sales";
 import SalesHistory from "./pages/SalesHistory";
 import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
 
 type Page = "dashboard" | "products" | "sales" | "sales-history";
 
@@ -15,6 +16,8 @@ function App() {
       <Sidebar page={page} setPage={setPage} />
 
       <main className="flex-1 p-6">
+        <Header page={page} />
+
         {page === "dashboard" && <Dashboard />}
         {page === "products" && <Products />}
         {page === "sales" && <Sales />}

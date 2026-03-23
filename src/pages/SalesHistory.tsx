@@ -65,7 +65,6 @@ function SalesHistory() {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6">Historial de Ventas</h1>
 
             <div className="bg-white shadow rounded-lg p-4 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-end">
                 <div>
