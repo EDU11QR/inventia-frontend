@@ -3,6 +3,8 @@ import api from "../api/api";
 import {
     BarChart,
     Bar,
+    LineChart,
+    Line,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -17,14 +19,25 @@ type DashboardData = {
     lowStockProducts: number;
 };
 
+type SalesByDay = {
+    day: string;
+    total: number;
+};
+
 function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
+    const [salesByDay, setSalesByDay] = useState<SalesByDay[]>([]);
 
     useEffect(() => {
         api
             .get("/dashboard")
             .then((res) => setData(res.data))
             .catch((err) => console.error("Error cargando dashboard:", err));
+
+        api
+            .get("/sales/by-day")
+            .then((res) => setSalesByDay(res.data))
+            .catch((err) => console.error("Error cargando ventas por día:", err));
     }, []);
 
     if (!data) {
@@ -89,6 +102,22 @@ function Dashboard() {
                         </h2>
                         <span className="text-2xl">⚠️</span>
                     </div>
+                </div>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-6">
+                <h2 className="text-lg font-bold mb-4">Ventas por día</h2>
+
+                <div className="w-full h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={salesByDay}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="day" />
+                            <YAxis />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="total" strokeWidth={3} />
+                        </LineChart>
+                    </ResponsiveContainer>
                 </div>
             </div>
 
