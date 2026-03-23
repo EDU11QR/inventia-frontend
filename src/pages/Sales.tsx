@@ -35,6 +35,23 @@ function Sales() {
         setShowCheckoutModal(true);
     };
 
+    const [showClearCartModal, setShowClearCartModal] = useState(false);
+
+    const handleClearCartClick = () => {
+        if (cart.length === 0) {
+            showToast("El carrito ya está vacío", "error");
+            return;
+        }
+
+        setShowClearCartModal(true);
+    };
+
+    const confirmClearCart = () => {
+        setCart([]);
+        setShowClearCartModal(false);
+        showToast("Carrito vaciado correctamente", "success");
+    };
+
     useEffect(() => {
         api
             .get("/products")
@@ -148,6 +165,14 @@ function Sales() {
                 message={`¿Deseas confirmar esta venta por S/ ${total}? Productos: ${totalItems}`}
                 onConfirm={confirmCheckout}
                 onCancel={() => setShowCheckoutModal(false)}
+            />
+
+            <ConfirmModal
+                isOpen={showClearCartModal}
+                title="Vaciar carrito"
+                message="¿Estás seguro de que deseas vaciar todo el carrito?"
+                onConfirm={confirmClearCart}
+                onCancel={() => setShowClearCartModal(false)}
             />
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -274,16 +299,29 @@ function Sales() {
                         <p className="text-gray-600 mb-1">Productos: {totalItems}</p>
                         <h3 className="font-bold text-xl mb-3">Total: S/ {total}</h3>
 
-                        <button
-                            onClick={handleCheckoutClick}
-                            disabled={cart.length === 0}
-                            className={`px-4 py-2 rounded text-white ${cart.length === 0
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-green-600 hover:bg-green-700"
-                                }`}
-                        >
-                            Confirmar Venta
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleClearCartClick}
+                                disabled={cart.length === 0}
+                                className={`px-4 py-2 rounded text-white ${cart.length === 0
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-red-500 hover:bg-red-600"
+                                    }`}
+                            >
+                                Vaciar carrito
+                            </button>
+
+                            <button
+                                onClick={handleCheckoutClick}
+                                disabled={cart.length === 0}
+                                className={`px-4 py-2 rounded text-white ${cart.length === 0
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-green-600 hover:bg-green-700"
+                                    }`}
+                            >
+                                Confirmar Venta
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
