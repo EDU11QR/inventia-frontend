@@ -24,9 +24,15 @@ type SalesByDay = {
     total: number;
 };
 
+type TopProduct = {
+    productName: string;
+    totalQuantity: number;
+};
+
 function Dashboard() {
     const [data, setData] = useState<DashboardData | null>(null);
     const [salesByDay, setSalesByDay] = useState<SalesByDay[]>([]);
+    const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
 
     useEffect(() => {
         api
@@ -38,6 +44,11 @@ function Dashboard() {
             .get("/sales/by-day")
             .then((res) => setSalesByDay(res.data))
             .catch((err) => console.error("Error cargando ventas por día:", err));
+
+        api
+            .get("/sales/top-products")
+            .then((res) => setTopProducts(res.data))
+            .catch((err) => console.error("Error cargando top productos:", err));
     }, []);
 
     if (!data) {
@@ -105,6 +116,8 @@ function Dashboard() {
                 </div>
             </div>
 
+            {/* Grafico de Lineas: Ventas por día */}
+
             <div className="bg-white shadow rounded-xl p-6">
                 <h2 className="text-lg font-bold mb-4">Ventas por día</h2>
 
@@ -120,6 +133,25 @@ function Dashboard() {
                     </ResponsiveContainer>
                 </div>
             </div>
+
+            <div className="bg-white shadow rounded-xl p-6">
+                <h2 className="text-lg font-bold mb-4">Top productos más vendidos</h2>
+
+                <div className="w-full h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={topProducts}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="productName" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="totalQuantity" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+
+            {/* Grafico de Barras: Resumen visual */}
 
             <div className="bg-white shadow rounded-xl p-6">
                 <h2 className="text-lg font-bold mb-4">Resumen visual</h2>
