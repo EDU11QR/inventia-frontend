@@ -19,6 +19,8 @@ function Sales() {
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
 
+    const [search, setSearch] = useState("");
+
     useEffect(() => {
         api.get("/products")
             .then((res) => setProducts(res.data))
@@ -84,6 +86,11 @@ function Sales() {
         0
     );
 
+    const filteredProducts = products.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.category.toLowerCase().includes(search.toLowerCase())
+    );
+
     const handleCheckout = async () => {
         if (cart.length === 0) {
             alert("El carrito está vacío");
@@ -116,35 +123,60 @@ function Sales() {
             <div>
                 <h2 className="text-xl font-bold mb-4">Productos</h2>
 
-                {products.map((p) => (
-                    <div
-                        key={p.id}
-                        className="border p-3 mb-2 rounded flex justify-between items-center"
-                    >
-                        <div>
-                            <p className="font-semibold text-lg">{p.name}</p>
-                            <p className="text-sm text-gray-600">{p.description || "Sin descripción"}</p>
-                            <p className="text-sm text-gray-500">Categoría: {p.category || "General"}</p>
+                <input
+                    type="text"
+                    placeholder="Buscar por nombre o categoría..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="border p-2 rounded w-full mb-4"
+                />
 
-                            <p className={`text-sm font-medium ${p.stock === 0 ? "text-red-600" : "text-gray-700"}`}>
-                                Stock disponible: {p.stock}
-                            </p>
+                {filteredProducts.map((p) => {
+                    const lowStock = p.stock <= p.stockMinimum && p.stock > 0;
 
-                            <p className="font-bold text-green-700">S/ {p.price}</p>
-                        </div>
-
-                        <button
-                            onClick={() => addToCart(p)}
-                            disabled={p.stock === 0} // desactiva el boton si el stock es 0
-                            className={`px-3 py-2 rounded text-white ${p.stock === 0
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-500 hover:bg-blue-600"
-                                }`} // cambia el color del boton si el stock es 0
+                    return (
+                        <div
+                            key={p.id}
+                            className="border p-3 mb-2 rounded flex justify-between items-center bg-white shadow-sm"
                         >
-                            {p.stock === 0 ? "Sin stock" : "Agregar"}
-                        </button>
-                    </div>
-                ))}
+                            <div>
+                                <p className="font-semibold text-lg">{p.name}</p>
+                                <p className="text-sm text-gray-600">
+                                    {p.description || "Sin descripción"}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    Categoría: {p.category || "General"}
+                                </p>
+
+                                <p
+                                    className={`text-sm font-medium ${p.stock === 0 ? "text-red-600" : "text-gray-700"
+                                        }`}
+                                >
+                                    Stock disponible: {p.stock}
+                                </p>
+
+                                {lowStock && (
+                                    <p className="text-xs text-orange-600 font-semibold">
+                                        Stock bajo
+                                    </p>
+                                )}
+
+                                <p className="font-bold text-green-700">S/ {p.price}</p>
+                            </div>
+
+                            <button
+                                onClick={() => addToCart(p)}
+                                disabled={p.stock === 0}
+                                className={`px-3 py-2 rounded text-white ${p.stock === 0
+                                    ? "bg-gray-400 cursor-not-allowed"
+                                    : "bg-blue-500 hover:bg-blue-600"
+                                    }`}
+                            >
+                                {p.stock === 0 ? "Sin stock" : "Agregar"}
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
 
             <div>

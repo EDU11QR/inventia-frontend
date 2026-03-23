@@ -25,6 +25,7 @@ function Products() {
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [search, setSearch] = useState("");
 
     const [form, setForm] = useState<ProductForm>({
         name: "",
@@ -109,9 +110,21 @@ function Products() {
         (p) => p.stock <= p.stockMinimum
     ).length;
 
+    const filteredProducts = products.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-4">Productos</h1>
+
+            <input
+                type="text"
+                placeholder="Buscar producto..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="border p-2 mb-4 w-full rounded"
+            />
 
             <button
                 onClick={() => {
@@ -228,8 +241,8 @@ function Products() {
                 </thead>
 
                 <tbody>
-                    {products.map((p) => {
-                        const lowStock = p.stock <= p.stockMinimum;
+                    {filteredProducts.map((p) => {
+                        const lowStock = p.stock <= p.stockMinimum && p.stock > 0;
 
                         return (
                             <tr
