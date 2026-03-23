@@ -48,6 +48,19 @@ function SalesHistory() {
         return true;
     });
 
+    const totalFilteredSales = filteredSales.length; //total de ventas
+
+    const totalFilteredRevenue = filteredSales.reduce(
+        (sum, sale) => sum + sale.total,
+        0
+    ); //total de ingresos
+
+    const totalFilteredItems = filteredSales.reduce(
+        (sum, sale) =>
+            sum + sale.details.reduce((detailSum, detail) => detailSum + detail.quantity, 0),
+        0
+    ); //total de items
+
 
 
     return (
@@ -88,6 +101,29 @@ function SalesHistory() {
                 >
                     Limpiar filtros
                 </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-white shadow rounded-lg p-4">
+                    <p className="text-sm text-gray-500">Ventas encontradas</p>
+                    <h2 className="text-2xl font-bold text-blue-700">
+                        {totalFilteredSales}
+                    </h2>
+                </div>
+
+                <div className="bg-white shadow rounded-lg p-4">
+                    <p className="text-sm text-gray-500">Ingresos del rango</p>
+                    <h2 className="text-2xl font-bold text-green-700">
+                        S/ {totalFilteredRevenue}
+                    </h2>
+                </div>
+
+                <div className="bg-white shadow rounded-lg p-4">
+                    <p className="text-sm text-gray-500">Productos vendidos</p>
+                    <h2 className="text-2xl font-bold text-purple-700">
+                        {totalFilteredItems}
+                    </h2>
+                </div>
             </div>
 
             {filteredSales.length === 0 ? (
