@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api/api";
 import Toast from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
 
 type Product = {
     id: number;
@@ -24,6 +25,15 @@ function Sales() {
         message: string;
         type: "success" | "error";
     } | null>(null);
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+    const handleCheckoutClick = () => {
+        if (cart.length === 0) {
+            showToast("El carrito está vacío", "error");
+            return;
+        }
+
+        setShowCheckoutModal(true);
+    };
 
     useEffect(() => {
         api
@@ -104,12 +114,7 @@ function Sales() {
             p.category.toLowerCase().includes(search.toLowerCase())
     );
 
-    const handleCheckout = async () => {
-        if (cart.length === 0) {
-            showToast("El carrito está vacío", "error");
-            return;
-        }
-
+    const confirmCheckout = async () => {
         try {
             const payload = {
                 items: cart.map((p) => ({
@@ -128,12 +133,22 @@ function Sales() {
         } catch (error) {
             console.error("Error al completar venta:", error);
             showToast("No se pudo completar la venta", "error");
+        } finally {
+            setShowCheckoutModal(false);
         }
     };
 
     return (
         <>
             {toast && <Toast message={toast.message} type={toast.type} />}
+
+            <ConfirmModal
+                isOpen={showCheckoutModal}
+                title="Confirmar venta"
+                message={`¿Deseas confirmar esta venta por S/ ${total}? Productos: ${totalItems}`}
+                onConfirm={confirmCheckout}
+                onCancel={() => setShowCheckoutModal(false)}
+            />
 
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* PRODUCTOS */}
@@ -188,8 +203,8 @@ function Sales() {
                                         onClick={() => addToCart(p)}
                                         disabled={p.stock === 0}
                                         className={`px-3 py-2 rounded text-white ${p.stock === 0
-                                                ? "bg-gray-400 cursor-not-allowed"
-                                                : "bg-blue-500 hover:bg-blue-600"
+                                            ? "bg-gray-400 cursor-not-allowed"
+                                            : "bg-blue-500 hover:bg-blue-600"
                                             }`}
                                     >
                                         {p.stock === 0 ? "Sin stock" : "Agregar"}
@@ -260,11 +275,11 @@ function Sales() {
                         <h3 className="font-bold text-xl mb-3">Total: S/ {total}</h3>
 
                         <button
-                            onClick={handleCheckout}
+                            onClick={handleCheckoutClick}
                             disabled={cart.length === 0}
                             className={`px-4 py-2 rounded text-white ${cart.length === 0
-                                    ? "bg-gray-400 cursor-not-allowed"
-                                    : "bg-green-600 hover:bg-green-700"
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-green-600 hover:bg-green-700"
                                 }`}
                         >
                             Confirmar Venta
