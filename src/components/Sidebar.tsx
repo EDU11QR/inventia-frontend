@@ -1,58 +1,54 @@
-type Page = "dashboard" | "products" | "sales" | "sales-history";
+import type { Page } from "../App";
 
 type SidebarProps = {
     page: Page;
     setPage: (page: Page) => void;
 };
 
+const navItems: { key: Page; label: string }[] = [
+    { key: "dashboard", label: "Dashboard" },
+    { key: "products", label: "Productos" },
+    { key: "sales", label: "Ventas" },
+    { key: "sales-history", label: "Historial de ventas" },
+];
+
 function Sidebar({ page, setPage }: SidebarProps) {
     return (
-        <aside className="w-64 bg-white shadow-md min-h-screen p-4">
-            <h1 className="text-2xl font-bold text-indigo-600 mb-8">
-                INVENTIA
-            </h1>
+        <aside className="w-full border-b border-slate-200 bg-white lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r">
+            <div className="flex h-full flex-col">
+                <div className="border-b border-slate-100 px-4 py-4 sm:px-6 lg:px-6 lg:py-8">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                        Sistema POS
+                    </p>
+                    <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                        INVENTIA
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-500">
+                        Inventario, ventas y analytics
+                    </p>
+                </div>
 
-            <nav className="flex flex-col gap-3">
-                <button
-                    onClick={() => setPage("dashboard")}
-                    className={`text-left px-4 py-2 rounded ${page === "dashboard"
-                        ? "bg-indigo-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200"
-                        }`}
-                >
-                    Dashboard
-                </button>
+                <nav className="p-3 sm:p-4 lg:p-4">
+                    <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+                        {navItems.map((item) => {
+                            const isActive = page === item.key;
 
-                <button
-                    onClick={() => setPage("products")}
-                    className={`text-left px-4 py-2 rounded ${page === "products"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200"
-                        }`}
-                >
-                    Productos
-                </button>
-
-                <button
-                    onClick={() => setPage("sales")}
-                    className={`text-left px-4 py-2 rounded ${page === "sales"
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200"
-                        }`}
-                >
-                    Ventas
-                </button>
-
-                <button
-                    onClick={() => setPage("sales-history")}
-                    className={`text-left px-4 py-2 rounded ${page === "sales-history"
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-100 hover:bg-gray-200"
-                        }`}
-                >
-                    Historial de ventas
-                </button>
-            </nav>
+                            return (
+                                <button
+                                    key={item.key}
+                                    onClick={() => setPage(item.key)}
+                                    className={`whitespace-nowrap rounded-xl px-4 py-3 text-left text-sm font-medium transition-all lg:w-full ${isActive
+                                            ? "bg-slate-900 text-white shadow-sm"
+                                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                        }`}
+                                >
+                                    {item.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </nav>
+            </div>
         </aside>
     );
 }
