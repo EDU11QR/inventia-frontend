@@ -17,35 +17,86 @@ type CartItem = Product & {
     quantity: number;
 };
 
+type Customer = {
+    id: number;
+    name: string;
+    documentNumber: string;
+    documentType: string;
+    address?: string;
+    email?: string;
+};
+
 function Sales() {
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [search, setSearch] = useState("");
+
+    const [documentSearch, setDocumentSearch] = useState("");
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [searchingCustomer, setSearchingCustomer] = useState(false);
+
     const [toast, setToast] = useState<{
         message: string;
         type: "success" | "error";
     } | null>(null);
+
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
     const [showClearCartModal, setShowClearCartModal] = useState(false);
 
     useEffect(() => {
-        api
-            .get("/products")
-            .then((res) => setProducts(res.data))
-            .catch((err) => {
-                console.error("Error cargando productos:", err);
-                showToast("No se pudieron cargar los productos", "error");
-            });
+        fetchProducts();
     }, []);
+
+    const fetchProducts = async () => {
+        try {
+            const res = await api.get("/products");
+            setProducts(res.data);
+        } catch (err) {
+            console.error("Error cargando productos:", err);
+            showToast("No se pudieron cargar los productos", "error");
+        }
+    };
 
     const showToast = (message: string, type: "success" | "error") => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
     };
 
+    const searchCustomerByDocument = async () => {
+        const value = documentSearch.trim();
+
+        if (!value) {
+            showToast("Ingresa un DNI o RUC para buscar", "error");
+            return;
+        }
+
+        try {
+            setSearchingCustomer(true);
+            const res = await api.get(`/customers/document/${value}`);
+            setSelectedCustomer(res.data);
+            showToast("Cliente encontrado correctamente", "success");
+        } catch (err) {
+            console.error("Error buscando cliente:", err);
+            setSelectedCustomer(null);
+            showToast("No se encontró un cliente con ese documento", "error");
+        } finally {
+            setSearchingCustomer(false);
+        }
+    };
+
+    const clearSelectedCustomer = () => {
+        setSelectedCustomer(null);
+        setDocumentSearch("");
+    };
+
     const handleCheckoutClick = () => {
         if (cart.length === 0) {
             showToast("El carrito está vacío", "error");
+            return;
+        }
+
+        if (!selectedCustomer) {
+            showToast("Debes seleccionar un cliente antes de registrar la venta", "error");
             return;
         }
 
@@ -101,9 +152,7 @@ function Sales() {
 
                 const newQuantity = p.quantity + amount;
 
-                if (newQuantity < 1) {
-                    return p;
-                }
+                if (newQuantity < 1) return p;
 
                 if (newQuantity > product.stock) {
                     showToast("No puedes superar el stock disponible", "error");
@@ -140,8 +189,14 @@ function Sales() {
     ).length;
 
     const confirmCheckout = async () => {
+        if (!selectedCustomer) {
+            showToast("Debes seleccionar un cliente", "error");
+            return;
+        }
+
         try {
             const payload = {
+                customerId: selectedCustomer.id,
                 items: cart.map((p) => ({
                     productId: p.id,
                     quantity: p.quantity,
@@ -152,14 +207,12 @@ function Sales() {
 
             showToast("Venta realizada correctamente", "success");
             setCart([]);
+            setShowCheckoutModal(false);
 
-            const res = await api.get("/products");
-            setProducts(res.data);
+            await fetchProducts();
         } catch (error) {
             console.error("Error al completar venta:", error);
             showToast("No se pudo completar la venta", "error");
-        } finally {
-            setShowCheckoutModal(false);
         }
     };
 
@@ -186,7 +239,7 @@ function Sales() {
             />
 
             <div className="w-full min-w-0 space-y-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <p className="text-sm font-medium text-slate-500">Productos visibles</p>
                         <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
@@ -216,7 +269,89 @@ function Sales() {
                             Productos visibles con alerta de stock
                         </p>
                     </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <p className="text-sm font-medium text-slate-500">Cliente seleccionado</p>
+                        <h2 className="mt-3 text-xl font-bold tracking-tight text-slate-900">
+                            {selectedCustomer ? selectedCustomer.name : "Sin cliente"}
+                        </h2>
+                        <p className="mt-2 text-sm text-slate-500">
+                            {selectedCustomer
+                                ? `${selectedCustomer.documentType}: ${selectedCustomer.documentNumber}`
+                                : "Busca por DNI o RUC"}
+                        </p>
+                    </div>
                 </div>
+
+                <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900">
+                                Cliente de la venta
+                            </h2>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Busca un cliente por DNI o RUC para asociarlo a la operación.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto] xl:min-w-[620px]">
+                            <input
+                                type="text"
+                                placeholder="Ingresa DNI o RUC..."
+                                value={documentSearch}
+                                onChange={(e) => setDocumentSearch(e.target.value)}
+                                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            />
+
+                            <button
+                                onClick={searchCustomerByDocument}
+                                disabled={searchingCustomer}
+                                className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                                {searchingCustomer ? "Buscando..." : "Buscar cliente"}
+                            </button>
+
+                            <button
+                                onClick={clearSelectedCustomer}
+                                className="rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                            >
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+
+                    {selectedCustomer && (
+                        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p className="text-sm font-semibold text-emerald-700">
+                                        Cliente seleccionado
+                                    </p>
+                                    <h3 className="mt-1 text-lg font-semibold text-slate-900">
+                                        {selectedCustomer.name}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-slate-600">
+                                        {selectedCustomer.documentType}: {selectedCustomer.documentNumber}
+                                    </p>
+                                    {selectedCustomer.address && (
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            Dirección: {selectedCustomer.address}
+                                        </p>
+                                    )}
+                                    {selectedCustomer.email && (
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            Email: {selectedCustomer.email}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                    Cliente activo
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </section>
 
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.95fr]">
                     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -260,10 +395,10 @@ function Sales() {
                                             <div
                                                 key={p.id}
                                                 className={`rounded-2xl border p-4 shadow-sm transition ${outOfStock
-                                                    ? "border-slate-200 bg-slate-50"
-                                                    : lowStock
-                                                        ? "border-orange-200 bg-orange-50"
-                                                        : "border-slate-200 bg-white hover:border-slate-300"
+                                                        ? "border-slate-200 bg-slate-50"
+                                                        : lowStock
+                                                            ? "border-orange-200 bg-orange-50"
+                                                            : "border-slate-200 bg-white hover:border-slate-300"
                                                     }`}
                                             >
                                                 <div className="flex items-start justify-between gap-3">
@@ -303,10 +438,10 @@ function Sales() {
                                                         <p className="text-slate-500">Stock</p>
                                                         <p
                                                             className={`mt-1 font-semibold ${outOfStock
-                                                                ? "text-red-600"
-                                                                : lowStock
-                                                                    ? "text-orange-600"
-                                                                    : "text-slate-800"
+                                                                    ? "text-red-600"
+                                                                    : lowStock
+                                                                        ? "text-orange-600"
+                                                                        : "text-slate-800"
                                                                 }`}
                                                         >
                                                             {p.stock}
@@ -326,8 +461,8 @@ function Sales() {
                                                         onClick={() => addToCart(p)}
                                                         disabled={outOfStock}
                                                         className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${outOfStock
-                                                            ? "cursor-not-allowed bg-slate-400"
-                                                            : "bg-blue-600 hover:bg-blue-700"
+                                                                ? "cursor-not-allowed bg-slate-400"
+                                                                : "bg-blue-600 hover:bg-blue-700"
                                                             }`}
                                                     >
                                                         {outOfStock ? "Sin stock" : "Agregar"}
@@ -427,6 +562,13 @@ function Sales() {
 
                                 <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                     <div className="flex items-center justify-between text-sm text-slate-600">
+                                        <span>Cliente</span>
+                                        <span className="font-medium text-slate-900">
+                                            {selectedCustomer ? selectedCustomer.name : "No seleccionado"}
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
                                         <span>Unidades</span>
                                         <span className="font-medium text-slate-900">{totalItems}</span>
                                     </div>
@@ -451,8 +593,8 @@ function Sales() {
                                         onClick={handleClearCartClick}
                                         disabled={cart.length === 0}
                                         className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0
-                                            ? "cursor-not-allowed bg-slate-400"
-                                            : "bg-red-500 hover:bg-red-600"
+                                                ? "cursor-not-allowed bg-slate-400"
+                                                : "bg-red-500 hover:bg-red-600"
                                             }`}
                                     >
                                         Vaciar carrito
@@ -460,10 +602,10 @@ function Sales() {
 
                                     <button
                                         onClick={handleCheckoutClick}
-                                        disabled={cart.length === 0}
-                                        className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0
-                                            ? "cursor-not-allowed bg-slate-400"
-                                            : "bg-emerald-600 hover:bg-emerald-700"
+                                        disabled={cart.length === 0 || !selectedCustomer}
+                                        className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0 || !selectedCustomer
+                                                ? "cursor-not-allowed bg-slate-400"
+                                                : "bg-emerald-600 hover:bg-emerald-700"
                                             }`}
                                     >
                                         Confirmar venta
