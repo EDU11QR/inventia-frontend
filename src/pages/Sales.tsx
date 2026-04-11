@@ -27,7 +27,6 @@ type Customer = {
 };
 
 type DocumentType = {
-    id: number;
     code: string;
     name: string;
 };
@@ -46,7 +45,7 @@ function Sales() {
     const [searchingCustomer, setSearchingCustomer] = useState(false);
 
     const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
-    const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<number | "">("");
+    const [selectedDocumentTypeCode, setSelectedDocumentTypeCode] = useState("");
     const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(false);
 
     const [processingCheckout, setProcessingCheckout] = useState(false);
@@ -130,7 +129,7 @@ function Sales() {
             return;
         }
 
-        if (!selectedDocumentTypeId) {
+        if (!selectedDocumentTypeCode) {
             showToast("Debes seleccionar un tipo de comprobante", "error");
             return;
         }
@@ -227,7 +226,7 @@ function Sales() {
         setCart([]);
         setSelectedCustomer(null);
         setDocumentSearch("");
-        setSelectedDocumentTypeId("");
+        setSelectedDocumentTypeCode("");
     };
 
     const confirmCheckout = async () => {
@@ -236,7 +235,7 @@ function Sales() {
             return;
         }
 
-        if (!selectedDocumentTypeId) {
+        if (!selectedDocumentTypeCode) {
             showToast("Debes seleccionar un tipo de comprobante", "error");
             return;
         }
@@ -253,18 +252,16 @@ function Sales() {
             };
 
             const saleRes = await api.post<SaleResponse>("/sales", salePayload);
-
             const saleId = saleRes.data.id;
 
             await api.post("/fiscal-documents/emit", {
-                saleId: saleId,
-                documentTypeId: selectedDocumentTypeId,
+                saleId,
+                documentType: selectedDocumentTypeCode,
             });
 
             showToast("Venta registrada y comprobante emitido correctamente", "success");
             setShowCheckoutModal(false);
             resetSaleState();
-
             await fetchProducts();
         } catch (error) {
             console.error("Error al completar venta y emitir comprobante:", error);
@@ -275,7 +272,7 @@ function Sales() {
     };
 
     const selectedDocumentType = documentTypes.find(
-        (doc) => doc.id === selectedDocumentTypeId
+        (doc) => doc.code === selectedDocumentTypeCode
     );
 
     return (
@@ -436,12 +433,8 @@ function Sales() {
                                 Tipo de comprobante
                             </label>
                             <select
-                                value={selectedDocumentTypeId}
-                                onChange={(e) =>
-                                    setSelectedDocumentTypeId(
-                                        e.target.value ? Number(e.target.value) : ""
-                                    )
-                                }
+                                value={selectedDocumentTypeCode}
+                                onChange={(e) => setSelectedDocumentTypeCode(e.target.value)}
                                 disabled={loadingDocumentTypes}
                                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
                             >
@@ -451,7 +444,7 @@ function Sales() {
                                         : "Selecciona un comprobante"}
                                 </option>
                                 {documentTypes.map((doc) => (
-                                    <option key={doc.id} value={doc.id}>
+                                    <option key={doc.code} value={doc.code}>
                                         {doc.name}
                                     </option>
                                 ))}
@@ -719,12 +712,12 @@ function Sales() {
                                         disabled={
                                             cart.length === 0 ||
                                             !selectedCustomer ||
-                                            !selectedDocumentTypeId ||
+                                            !selectedDocumentTypeCode ||
                                             processingCheckout
                                         }
                                         className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0 ||
                                                 !selectedCustomer ||
-                                                !selectedDocumentTypeId ||
+                                                !selectedDocumentTypeCode ||
                                                 processingCheckout
                                                 ? "cursor-not-allowed bg-slate-400"
                                                 : "bg-emerald-600 hover:bg-emerald-700"
