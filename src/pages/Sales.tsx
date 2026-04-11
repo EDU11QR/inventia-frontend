@@ -26,6 +26,16 @@ type Customer = {
     email?: string;
 };
 
+type DocumentType = {
+    id: number;
+    code: string;
+    name: string;
+};
+
+type SaleResponse = {
+    id: number;
+};
+
 function Sales() {
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
@@ -34,6 +44,12 @@ function Sales() {
     const [documentSearch, setDocumentSearch] = useState("");
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [searchingCustomer, setSearchingCustomer] = useState(false);
+
+    const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
+    const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<number | "">("");
+    const [loadingDocumentTypes, setLoadingDocumentTypes] = useState(false);
+
+    const [processingCheckout, setProcessingCheckout] = useState(false);
 
     const [toast, setToast] = useState<{
         message: string;
@@ -45,6 +61,7 @@ function Sales() {
 
     useEffect(() => {
         fetchProducts();
+        fetchDocumentTypes();
     }, []);
 
     const fetchProducts = async () => {
@@ -54,6 +71,19 @@ function Sales() {
         } catch (err) {
             console.error("Error cargando productos:", err);
             showToast("No se pudieron cargar los productos", "error");
+        }
+    };
+
+    const fetchDocumentTypes = async () => {
+        try {
+            setLoadingDocumentTypes(true);
+            const res = await api.get("/document-types");
+            setDocumentTypes(res.data);
+        } catch (err) {
+            console.error("Error cargando tipos de comprobante:", err);
+            showToast("No se pudieron cargar los tipos de comprobante", "error");
+        } finally {
+            setLoadingDocumentTypes(false);
         }
     };
 
@@ -97,6 +127,11 @@ function Sales() {
 
         if (!selectedCustomer) {
             showToast("Debes seleccionar un cliente antes de registrar la venta", "error");
+            return;
+        }
+
+        if (!selectedDocumentTypeId) {
+            showToast("Debes seleccionar un tipo de comprobante", "error");
             return;
         }
 
@@ -188,14 +223,28 @@ function Sales() {
         (p) => p.stock <= p.stockMinimum && p.stock > 0
     ).length;
 
+    const resetSaleState = () => {
+        setCart([]);
+        setSelectedCustomer(null);
+        setDocumentSearch("");
+        setSelectedDocumentTypeId("");
+    };
+
     const confirmCheckout = async () => {
         if (!selectedCustomer) {
             showToast("Debes seleccionar un cliente", "error");
             return;
         }
 
+        if (!selectedDocumentTypeId) {
+            showToast("Debes seleccionar un tipo de comprobante", "error");
+            return;
+        }
+
         try {
-            const payload = {
+            setProcessingCheckout(true);
+
+            const salePayload = {
                 customerId: selectedCustomer.id,
                 items: cart.map((p) => ({
                     productId: p.id,
@@ -203,18 +252,31 @@ function Sales() {
                 })),
             };
 
-            await api.post("/sales", payload);
+            const saleRes = await api.post<SaleResponse>("/sales", salePayload);
 
-            showToast("Venta realizada correctamente", "success");
-            setCart([]);
+            const saleId = saleRes.data.id;
+
+            await api.post("/fiscal-documents/emit", {
+                saleId: saleId,
+                documentTypeId: selectedDocumentTypeId,
+            });
+
+            showToast("Venta registrada y comprobante emitido correctamente", "success");
             setShowCheckoutModal(false);
+            resetSaleState();
 
             await fetchProducts();
         } catch (error) {
-            console.error("Error al completar venta:", error);
-            showToast("No se pudo completar la venta", "error");
+            console.error("Error al completar venta y emitir comprobante:", error);
+            showToast("No se pudo completar la venta o emitir el comprobante", "error");
+        } finally {
+            setProcessingCheckout(false);
         }
     };
+
+    const selectedDocumentType = documentTypes.find(
+        (doc) => doc.id === selectedDocumentTypeId
+    );
 
     return (
         <>
@@ -225,9 +287,14 @@ function Sales() {
                 title="Confirmar venta"
                 message={`¿Deseas confirmar esta venta por S/ ${total.toFixed(
                     2
-                )}? Productos: ${totalItems}`}
+                )}? Productos: ${totalItems}. Comprobante: ${selectedDocumentType ? selectedDocumentType.name : "No seleccionado"
+                    }`}
                 onConfirm={confirmCheckout}
-                onCancel={() => setShowCheckoutModal(false)}
+                onCancel={() => {
+                    if (!processingCheckout) {
+                        setShowCheckoutModal(false);
+                    }
+                }}
             />
 
             <ConfirmModal
@@ -351,6 +418,46 @@ function Sales() {
                             </div>
                         </div>
                     )}
+                </section>
+
+                <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900">
+                                Comprobante fiscal
+                            </h2>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Selecciona el tipo de comprobante que se emitirá al finalizar la venta.
+                            </p>
+                        </div>
+
+                        <div className="w-full lg:max-w-md">
+                            <label className="mb-2 block text-sm font-medium text-slate-700">
+                                Tipo de comprobante
+                            </label>
+                            <select
+                                value={selectedDocumentTypeId}
+                                onChange={(e) =>
+                                    setSelectedDocumentTypeId(
+                                        e.target.value ? Number(e.target.value) : ""
+                                    )
+                                }
+                                disabled={loadingDocumentTypes}
+                                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                            >
+                                <option value="">
+                                    {loadingDocumentTypes
+                                        ? "Cargando tipos..."
+                                        : "Selecciona un comprobante"}
+                                </option>
+                                {documentTypes.map((doc) => (
+                                    <option key={doc.id} value={doc.id}>
+                                        {doc.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
                 </section>
 
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.35fr_0.95fr]">
@@ -569,6 +676,13 @@ function Sales() {
                                     </div>
 
                                     <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
+                                        <span>Comprobante</span>
+                                        <span className="font-medium text-slate-900">
+                                            {selectedDocumentType ? selectedDocumentType.name : "No seleccionado"}
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
                                         <span>Unidades</span>
                                         <span className="font-medium text-slate-900">{totalItems}</span>
                                     </div>
@@ -602,13 +716,21 @@ function Sales() {
 
                                     <button
                                         onClick={handleCheckoutClick}
-                                        disabled={cart.length === 0 || !selectedCustomer}
-                                        className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0 || !selectedCustomer
+                                        disabled={
+                                            cart.length === 0 ||
+                                            !selectedCustomer ||
+                                            !selectedDocumentTypeId ||
+                                            processingCheckout
+                                        }
+                                        className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0 ||
+                                                !selectedCustomer ||
+                                                !selectedDocumentTypeId ||
+                                                processingCheckout
                                                 ? "cursor-not-allowed bg-slate-400"
                                                 : "bg-emerald-600 hover:bg-emerald-700"
                                             }`}
                                     >
-                                        Confirmar venta
+                                        {processingCheckout ? "Procesando..." : "Confirmar venta"}
                                     </button>
                                 </div>
                             </div>
