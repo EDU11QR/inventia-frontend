@@ -248,6 +248,7 @@ function Sales() {
                 items: cart.map((p) => ({
                     productId: p.id,
                     quantity: p.quantity,
+                    unitPrice: p.price,
                 })),
             };
 
@@ -495,10 +496,10 @@ function Sales() {
                                             <div
                                                 key={p.id}
                                                 className={`rounded-2xl border p-4 shadow-sm transition ${outOfStock
-                                                        ? "border-slate-200 bg-slate-50"
-                                                        : lowStock
-                                                            ? "border-orange-200 bg-orange-50"
-                                                            : "border-slate-200 bg-white hover:border-slate-300"
+                                                    ? "border-slate-200 bg-slate-50"
+                                                    : lowStock
+                                                        ? "border-orange-200 bg-orange-50"
+                                                        : "border-slate-200 bg-white hover:border-slate-300"
                                                     }`}
                                             >
                                                 <div className="flex items-start justify-between gap-3">
@@ -538,10 +539,10 @@ function Sales() {
                                                         <p className="text-slate-500">Stock</p>
                                                         <p
                                                             className={`mt-1 font-semibold ${outOfStock
-                                                                    ? "text-red-600"
-                                                                    : lowStock
-                                                                        ? "text-orange-600"
-                                                                        : "text-slate-800"
+                                                                ? "text-red-600"
+                                                                : lowStock
+                                                                    ? "text-orange-600"
+                                                                    : "text-slate-800"
                                                                 }`}
                                                         >
                                                             {p.stock}
@@ -561,8 +562,8 @@ function Sales() {
                                                         onClick={() => addToCart(p)}
                                                         disabled={outOfStock}
                                                         className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${outOfStock
-                                                                ? "cursor-not-allowed bg-slate-400"
-                                                                : "bg-blue-600 hover:bg-blue-700"
+                                                            ? "cursor-not-allowed bg-slate-400"
+                                                            : "bg-blue-600 hover:bg-blue-700"
                                                             }`}
                                                     >
                                                         {outOfStock ? "Sin stock" : "Agregar"}
@@ -700,8 +701,8 @@ function Sales() {
                                         onClick={handleClearCartClick}
                                         disabled={cart.length === 0}
                                         className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0
-                                                ? "cursor-not-allowed bg-slate-400"
-                                                : "bg-red-500 hover:bg-red-600"
+                                            ? "cursor-not-allowed bg-slate-400"
+                                            : "bg-red-500 hover:bg-red-600"
                                             }`}
                                     >
                                         Vaciar carrito
@@ -716,11 +717,11 @@ function Sales() {
                                             processingCheckout
                                         }
                                         className={`rounded-xl px-4 py-3 text-sm font-semibold text-white transition ${cart.length === 0 ||
-                                                !selectedCustomer ||
-                                                !selectedDocumentTypeCode ||
-                                                processingCheckout
-                                                ? "cursor-not-allowed bg-slate-400"
-                                                : "bg-emerald-600 hover:bg-emerald-700"
+                                            !selectedCustomer ||
+                                            !selectedDocumentTypeCode ||
+                                            processingCheckout
+                                            ? "cursor-not-allowed bg-slate-400"
+                                            : "bg-emerald-600 hover:bg-emerald-700"
                                             }`}
                                     >
                                         {processingCheckout ? "Procesando..." : "Confirmar venta"}
