@@ -1,73 +1,167 @@
-# React + TypeScript + Vite
+# 🚀 INVENTIA - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend oficial de **INVENTIA**, un sistema moderno de inventario y punto de venta (POS) desarrollado con tecnologías frontend actuales y una arquitectura escalable.
 
-Currently, two official plugins are available:
+La aplicación está construida utilizando **React + TypeScript + Vite**, enfocándose en rendimiento, mantenibilidad y experiencia de usuario.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+# 📋 Descripción
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+INVENTIA es una plataforma diseñada para gestionar:
 
-## Expanding the ESLint configuration
+- Inventario de productos
+- Ventas y operaciones POS
+- Reportes y estadísticas
+- Administración comercial
+- Visualización de métricas en tiempo real
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Este repositorio contiene toda la capa frontend encargada de la interfaz visual y comunicación con el backend mediante APIs REST.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# 🛠️ Stack Tecnológico
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Frontend
+- React
+- TypeScript
+- Vite
+- TailwindCSS
+- Axios
+- React Router DOM
+- Recharts
+
+## Herramientas de desarrollo
+- Visual Studio Code
+- Git
+- GitHub
+- npm
+
+---
+
+# 🧩 Arquitectura del proyecto
+
+El proyecto sigue una estructura modular y escalable para facilitar el mantenimiento y crecimiento del sistema.
+
+```bash
+src/
+│
+├── assets/          # Recursos estáticos
+├── components/      # Componentes reutilizables
+├── hooks/           # Custom Hooks
+├── layouts/         # Estructuras base de páginas
+├── pages/           # Vistas principales
+├── routes/          # Configuración de rutas
+├── services/        # Peticiones HTTP y APIs
+├── types/           # Interfaces y tipados
+├── utils/           # Funciones auxiliares
+└── main.tsx         # Punto de entrada
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+# ✨ Características principales
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 📦 Gestión de Inventario
+- Registro de productos
+- Actualización de stock
+- Control de existencias
+
+## 🛒 Sistema POS
+- Gestión de ventas
+- Flujo de caja
+- Control de operaciones
+
+## 📊 Dashboard Analítico
+- Estadísticas visuales
+- Gráficos dinámicos
+- Indicadores comerciales
+
+## 🔐 Autenticación
+- Inicio de sesión
+- Protección de rutas
+- Manejo de sesiones
+
+## 📱 Diseño Responsive
+- Adaptable a múltiples dispositivos
+- Interfaz moderna y limpia
+
+---
+
+# ⚙️ Instalación del proyecto
+
+## 1️⃣ Clonar repositorio
+
+```bash
+git clone https://github.com/EDU11QR/inventia-frontend.git
 ```
+
+---
+
+## 2️⃣ Ingresar al proyecto
+
+```bash
+cd inventia-frontend
+```
+
+---
+
+## 3️⃣ Instalar dependencias
+
+```bash
+npm install
+```
+
+---
+
+## 4️⃣ Ejecutar entorno de desarrollo
+
+```bash
+npm run dev
+```
+
+---
+
+## 5️⃣ Abrir aplicación
+
+```bash
+http://localhost:5173
+```
+
+---
+
+# 🔗 Comunicación con Backend
+
+El frontend consume APIs REST desarrolladas con:
+
+- Java Spring Boot
+- Spring Data JPA
+- Hibernate
+- MySQL
+
+---
+
+# 🎨 Diseño y experiencia de usuario
+
+La interfaz fue diseñada utilizando:
+
+- TailwindCSS
+- Componentes reutilizables
+- Diseño limpio y moderno
+- Arquitectura visual escalable
+
+---
+
+# 📚 Objetivos del proyecto
+
+- Aplicar buenas prácticas frontend
+- Implementar arquitectura escalable
+- Integrar React con APIs REST
+- Construir un sistema empresarial moderno
+- Crear un proyecto sólido para portafolio profesional
+
+---
+
+# 👨‍💻 Autor
+
+## DevEdu
